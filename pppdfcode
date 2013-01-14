@@ -7,16 +7,19 @@
 #   -n N	put N files in each generated PDF (default 10)
 #   -p foo	require password "foo" to open resulting PDF
 #   -r		resume, do not generate intermediate PS files
+#   -N NAME	output will be ~/tmp/pppdfcode-NAME/NAME-i.pdf
 
 dieusage() {
 	exec 1>&2
-	echo usage: `basename "$0"` "[-r] [-n N] [-p passwd]"
+	echo usage: `basename "$0"` "[-r] [-n N] [-p passwd] [-N name]"
 	exit 1
 }
 
 p=
 n=10
 resume=
+name=`pwd`
+name=`basename "$name"`
 while true; do
 	case "$1" in
 	-n)
@@ -36,6 +39,11 @@ while true; do
 		resume=yes
 		shift
 		;;
+	-N)
+		shift
+		name="$1"
+		shift
+		;;
 	*)
 		break
 		;;
@@ -44,9 +52,6 @@ done
 
 set -e
 
-# cd hg/coros/src
-name=`pwd`
-name=`basename "$name"`
 o=$HOME/tmp/`basename $0`-"$name"
 
 if test "$resume" != "yes"; then
