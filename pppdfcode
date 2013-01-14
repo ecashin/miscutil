@@ -1,0 +1,98 @@
+#! /bin/sh
+# pppdfcode - create PDFs for the all-text source files under cwd
+# copyright 2013 Ed Cashin <ecashin@noserose.net>
+# released under GPLv2 license
+#
+# options (that must come before other stuff on CLI):
+#   -n N	put N files in each generated PDF (default 10)
+#   -p foo	require password "foo" to open resulting PDF
+#   -r		resume, do not generate intermediate PS files
+
+dieusage() {
+	exec 1>&2
+	echo usage: `basename "$0"` "[-r] [-n N] [-p passwd]"
+	exit 1
+}
+
+p=
+n=10
+resume=
+while true; do
+	case "$1" in
+	-n)
+		shift
+		test "$1" || dieusage
+		expr "$1" + 3 > /dev/null 2>&1 || dieusage
+		n="$1"
+		shift
+		;;
+	-p)
+		shift
+		test "$1" || dieusage
+		p="$1"
+		shift
+		;;
+	-r)
+		resume=yes
+		shift
+		;;
+	*)
+		break
+		;;
+	esac
+done
+
+set -e
+
+# cd hg/coros/src
+name=`pwd`
+name=`basename "$name"`
+o=$HOME/tmp/`basename $0`-"$name"
+
+if test "$resume" != "yes"; then
+	rm -rf "$o"/*
+	
+	find . ! -type d | while read f; do
+		b=`basename "$f"`
+		d="$o/"`dirname "$f"`
+		mkdir -p "$d"
+		enscript -G --color=1 --line-numbers -o "$d"/"$b".ps "$f"
+	done
+fi
+
+cd "$o"
+
+i=0
+brk=
+find . -name '*.ps' -type f | while true; do
+	i=`expr "$i" + 1`
+	files=
+	j=0
+	while test "$j" -lt "$n"; do
+		read f || true
+		test "$f" || { brk=yes; break; }
+		files="$files $f"
+		j=`expr "$j" + 1`
+	done
+	if test "$files"; then
+		if test "$p"; then
+			gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite \
+				-sUserPassword="$p" -sOwnerPassword="$p" \
+				-sOutputFile="$name"-"$i".pdf $files
+		else
+			gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite \
+				-sOutputFile="$name"-"$i".pdf $files
+		fi
+	fi
+	if test "$brk" = "yes"; then
+		break
+	fi
+	printf "%d" `expr "$i" '*' "$n"`
+	if test "$i" -gt 0 && test `expr "$i" % 20` = "0"; then
+		echo
+	else
+		printf "%s" " "
+	fi
+done
+
+	
