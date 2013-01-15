@@ -25,6 +25,7 @@ resume=
 name=`pwd`
 name=`basename "$name"`
 indexf=/dev/null
+saveargs="$*"
 while true; do
 	case "$1" in
 	-n)
@@ -71,7 +72,11 @@ while true; do
 	esac
 done
 
-echo "$0 `date`" >"$indexf" || {
+{
+	echo "$0 $saveargs"
+	date
+	echo
+} >"$indexf" || {
 	echo 2>&1 `basename "$0"` Error: cannot write to "$indexf"
 	dieusage
 }
