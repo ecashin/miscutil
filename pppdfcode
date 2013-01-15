@@ -10,10 +10,12 @@
 #   -p foo	require password "foo" to open resulting PDF
 #   -r		resume, do not generate intermediate PS files
 #   -N NAME	output will be ~/tmp/pppdfcode-NAME/NAME-i.pdf
+#   -i INDEX	generate index in output file INDEX
 
 dieusage() {
 	exec 1>&2
-	echo usage: `basename "$0"` "[-r] [-n N|-L m] [-p passwd] [-N name]"
+	echo usage: `basename "$0"` \
+		"[-r] [-n N|-L m] [-p passwd] [-N name] [-i INDEX]"
 	exit 1
 }
 
@@ -22,6 +24,7 @@ n=10
 resume=
 name=`pwd`
 name=`basename "$name"`
+indexf=/dev/null
 while true; do
 	case "$1" in
 	-n)
@@ -53,6 +56,12 @@ while true; do
 		name="$1"
 		shift
 		;;
+	-i)
+		shift
+		test "$1" || dieusage
+		indexf="$1"
+		shift
+		;;
 	'-?')
 		dieusage
 		;;
@@ -61,6 +70,11 @@ while true; do
 		;;
 	esac
 done
+
+echo "$0 `date`" >"$indexf" || {
+	echo 2>&1 `basename "$0"` Error: cannot write to "$indexf"
+	dieusage
+}
 
 set -e
 
@@ -112,6 +126,7 @@ find . -name '*.ps' -type f | while true; do
 			gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite \
 				-sOutputFile="$name"-"$i".pdf $files
 		fi
+		echo "$name"-"$i".pdf: "$files" >> "$indexf"
 	fi
 	if test "$brk" = "yes"; then
 		break
