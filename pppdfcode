@@ -5,13 +5,15 @@
 #
 # options (that must come before other stuff on CLI):
 #   -n N	put N files in each generated PDF (default 10)
+#   -L M	start next output file after M lines
+#               [incompatible with -n; output can have >M lines]
 #   -p foo	require password "foo" to open resulting PDF
 #   -r		resume, do not generate intermediate PS files
 #   -N NAME	output will be ~/tmp/pppdfcode-NAME/NAME-i.pdf
 
 dieusage() {
 	exec 1>&2
-	echo usage: `basename "$0"` "[-r] [-n N] [-p passwd] [-N name]"
+	echo usage: `basename "$0"` "[-r] [-n N|-L m] [-p passwd] [-N name]"
 	exit 1
 }
 
@@ -29,6 +31,12 @@ while true; do
 		n="$1"
 		shift
 		;;
+	-L)
+		shift
+		test "$1" || dieusage
+		L="$1"
+		shift
+		;;
 	-p)
 		shift
 		test "$1" || dieusage
@@ -41,8 +49,12 @@ while true; do
 		;;
 	-N)
 		shift
+		test "$1" || dieusage
 		name="$1"
 		shift
+		;;
+	'-?')
+		dieusage
 		;;
 	*)
 		break
@@ -61,7 +73,7 @@ if test "$resume" != "yes"; then
 		b=`basename "$f"`
 		d="$o/"`dirname "$f"`
 		mkdir -p "$d"
-		enscript -G --color=1 --line-numbers -o "$d"/"$b".ps "$f"
+		enscript -f Courier12 -G --color=1 --line-numbers -o "$d"/"$b".ps "$f"
 	done
 fi
 
@@ -73,11 +85,23 @@ find . -name '*.ps' -type f | while true; do
 	i=`expr "$i" + 1`
 	files=
 	j=0
-	while test "$j" -lt "$n"; do
+	k=0
+	while true; do
+		if test "$L"; then
+			if test "$k" -ge "$L"; then
+				break
+			fi
+		else
+			if test "$j" -ge "$n"; then
+				break
+			fi
+		fi
 		read f || true
 		test "$f" || { brk=yes; break; }
 		files="$files $f"
 		j=`expr "$j" + 1`
+		lines=`wc -l < "$f"`
+		k=`expr $k + $lines`
 	done
 	if test "$files"; then
 		if test "$p"; then
