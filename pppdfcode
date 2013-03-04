@@ -4,6 +4,7 @@
 # released under GPLv2 license
 #
 # options (that must come before other stuff on CLI):
+#   -F N	try to use Courier{N} font (12 and 10 work)
 #   -n N	put N files in each generated PDF (default 10)
 #   -L M	start next output file after M lines
 #               [incompatible with -n; output can have >M lines]
@@ -15,11 +16,12 @@
 dieusage() {
 	exec 1>&2
 	echo usage: `basename "$0"` \
-		"[-r] [-n N|-L m] [-p passwd] [-N name] [-i INDEX]"
+		"[-F N] [-r] [-n N|-L m] [-p passwd] [-N name] [-i INDEX]"
 	exit 1
 }
 
 p=
+fontsz=12
 n=10
 resume=
 name=`pwd`
@@ -28,6 +30,12 @@ indexf=/dev/null
 saveargs="$*"
 while true; do
 	case "$1" in
+	-F)
+		shift
+		test "$1" || dieusage
+		fontsz="$1"
+		shift
+	        ;;
 	-n)
 		shift
 		test "$1" || dieusage
@@ -92,7 +100,7 @@ if test "$resume" != "yes"; then
 		b=`basename "$f"`
 		d="$o/"`dirname "$f"`
 		mkdir -p "$d"
-		enscript -f Courier12 -G --color=1 --line-numbers -o "$d"/"$b".ps "$f"
+		enscript -f Courier"$fontsz" -G --color=1 --line-numbers -o "$d"/"$b".ps "$f"
 	done
 fi
 
