@@ -5,9 +5,9 @@ miscellaneous utilities
 
 bkp
 
-  This is a script I wrote long ago, and it has a race condition,
-  but that really doesn't matter for human users.  A common pattern
-  of mine is to use bash history like this,
+  This is a script I wrote long ago.  The "-i" option for cp protects
+  against a race condition that human users probably will never hit.
+  A common pattern of mine is to use bash history like this,
 
     bkp ~/.hgrc
     vi !$
