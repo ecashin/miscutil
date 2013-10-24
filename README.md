@@ -3,6 +3,15 @@ miscutil
 
 miscellaneous utilities
 
+bkp
+
+  This is a script I wrote long ago, and it has a race condition,
+  but that really doesn't matter for human users.  A common pattern
+  of mine is to use bash history like this,
+
+    bkp ~/.hgrc
+    vi !$
+
 pppdfcode
 
   This script aids in reading source code "cover to cover" on an
